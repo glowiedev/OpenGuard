@@ -76,8 +76,11 @@ bot.on("chat_join_request", async (ctx) => {
 });
 
 async function ensureAdmins(ctx: CommandContext<any>) {
+  if (!ctx.from || !ctx.chat) {
+    throw new Error("❌ Invalid context.");
+  }
   const chatId = ctx.chat.id;
-  const userId = ctx.from!.id;
+  const userId = ctx.from.id;
   const botId = (await ctx.api.getMe()).id;
   const userMember = await ctx.api.getChatMember(chatId, userId);
   const botMember = await ctx.api.getChatMember(chatId, botId);
@@ -223,7 +226,7 @@ bot.command("link", async (ctx) => {
     );
   }
   
-  // For channels, only check if bot is admin (user check not needed as channel admins can post as channel)
+  // Check if bot is admin
   const chatId = ctx.chat.id;
   const botId = (await ctx.api.getMe()).id;
   const botMember = await ctx.api.getChatMember(chatId, botId);
@@ -233,10 +236,11 @@ bot.command("link", async (ctx) => {
     return ctx.reply("❌ The bot must be an administrator to run this command\\.");
   }
   
-  // For groups (not channels), also verify user is admin
-  if (ctx.chat.type === "group" || ctx.chat.type === "supergroup") {
+  // For channels: If someone can post, they're an admin (channels only allow admin posts)
+  // For groups: Verify user is actually an admin
+  if ((ctx.chat.type === "group" || ctx.chat.type === "supergroup") && ctx.from) {
     try {
-      const userId = ctx.from!.id;
+      const userId = ctx.from.id;
       const userMember = await ctx.api.getChatMember(chatId, userId);
       const isUserAdmin = userMember.status === "administrator" || userMember.status === "creator";
       if (!isUserAdmin) {
@@ -246,6 +250,8 @@ bot.command("link", async (ctx) => {
       return ctx.reply("❌ Could not verify your admin status\\.");
     }
   }
+  
+  // For channels: Command can only be sent by admins anyway, so we're good to proceed
 
   const currentChatId = ctx.chat.id;
   const scanResult = await redis.scan(0, { match: "config:*" });
@@ -268,14 +274,22 @@ bot.command("link", async (ctx) => {
       `❌ Link failed: This setup is already linked to chat ID \`${config.portalChatId}\`\.`,
     );
   }
-  const originalAdmins = await bot.api.getChatAdministrators(
-    foundConfigKey.substring(7),
-  );
-  if (!!!originalAdmins.find((admin) => admin.user.id === ctx.from!.id)) {
-    return ctx.reply(
-      "❌ Link failed: You must be an admin of the group to link the portal\.",
+  // For channels, if the message was posted, the user is an admin (channels don't allow non-admin posts)
+  // For groups, verify the user is an admin of the original setup group
+  if (ctx.chat.type === "group" || ctx.chat.type === "supergroup") {
+    if (!ctx.from) {
+      return ctx.reply("❌ Link failed: Could not identify user\\.");
+    }
+    const originalAdmins = await bot.api.getChatAdministrators(
+      foundConfigKey.substring(7),
     );
+    if (!!!originalAdmins.find((admin) => admin.user.id === ctx.from.id)) {
+      return ctx.reply(
+        "❌ Link failed: You must be an admin of the group to link the portal\.",
+      );
+    }
   }
+  // For channels: If they can post the command, they're an admin - skip verification
   config.portalChatId = currentChatId;
   await redis.set(foundConfigKey, config);
   const embedText = `✅ *Portal Linked Successfully*\n\nClick below to verify your wallet\\.`;
@@ -302,14 +316,16 @@ bot.command("link", async (ctx) => {
 
 const userState = new Map<number, "mint" | "amount" | null>();
 bot.callbackQuery("set_mint", async (ctx) => {
-  userState.set(ctx.from!.id, "mint");
+  if (!ctx.from) return;
+  userState.set(ctx.from.id, "mint");
   await ctx.answerCallbackQuery({
     text: "Ready to set the Mint Address\. Please send the address in the chat now\.",
     show_alert: false,
   });
 });
 bot.callbackQuery("set_amount", async (ctx) => {
-  userState.set(ctx.from!.id, "amount");
+  if (!ctx.from) return;
+  userState.set(ctx.from.id, "amount");
   await ctx.answerCallbackQuery({
     text: "Ready to set the Tokens Amount\\. Please send the minimum number (e\\.g\\., 100000) now\\.",
     show_alert: false,
@@ -347,7 +363,8 @@ bot.callbackQuery("reset_amount", async (ctx) => {
 });
 
 bot.on("message:text", async (ctx) => {
-  const userId = ctx.from!.id;
+  if (!ctx.from || !ctx.chat) return;
+  const userId = ctx.from.id;
   const setting = userState.get(userId);
   if (setting) {
     const input = ctx.message.text.trim();
