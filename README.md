@@ -83,16 +83,10 @@ Create reusable components:
 ### ENV
 Follow .env.example for environment setup
 
-Required variables:
-```env
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_SECRET=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-SOLANA_RPC_URL=
-NEXT_PUBLIC_DOMAIN=
-CRON_SECRET=
-```
+### Telegram
+REMEMBER to setup the webhook!!!
+https://telegram.tools/webhook-manager#/
+Put the telegram token in and add the domain + /api/bot/ + your secret you defined in .env.
 
 ### Cronjob
 Runs every 15 minutes to verify token balances. Configured in `vercel.json`.

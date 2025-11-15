@@ -5,7 +5,7 @@ import { generateNonce, getAccount, getMint } from "@/lib/crypto";
 import { RedisReplayStore } from "@/lib/store";
 import { KVConfig } from "@/lib/types";
 import { handleOpenKitAuth } from "@/lib/withOpenKitAuth";
-import { inMemoryLRU, OpenKit403Config } from "@openkitx403/server";
+import { OpenKit403Config } from "@openkitx403/server";
 import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { Redis } from "@upstash/redis";
