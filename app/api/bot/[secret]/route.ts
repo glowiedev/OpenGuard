@@ -107,6 +107,83 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
+bot.command("start", async (ctx) => {
+  const welcomeMessage = `🛡️ *Welcome to OpenGuard\\!*
+
+*Token\\-gated Telegram communities\\. Zero manual work\\.*
+
+🔹 *What is OpenGuard?*
+A bot that automatically verifies users hold specific Solana tokens before joining your community\\.
+
+🔹 *For Group Admins:*
+• Add me to your group as admin
+• Run \`/setup\` to configure token requirements
+• Run \`/link\` in your channel to create a join portal
+• Done\\! I'll handle verification automatically
+
+🔹 *For Users:*
+• Click the join button in any token\\-gated channel
+• Connect your Solana wallet
+• If you have the required tokens, you're in\\!
+
+🔹 *Security:*
+✅ Checks token balance every 15 minutes
+✅ Removes users who no longer hold tokens
+✅ No private keys accessed
+✅ Powered by OpenKitx403 protocol
+
+📚 Need help? Use /help
+🌐 Website: openguard\\.cc`;
+
+  await ctx.reply(welcomeMessage, {
+    parse_mode: "MarkdownV2",
+    reply_markup: new InlineKeyboard()
+      .url("🌐 Visit Website", "https://openguard.cc")
+      .row()
+      .url("📖 GitHub", "https://github.com/glowiedev/OpenGuard"),
+  });
+});
+
+bot.command("help", async (ctx) => {
+  const helpMessage = `📚 *OpenGuard Help*
+
+*Commands:*
+• \`/start\` \\- Show welcome message
+• \`/help\` \\- Show this help menu
+• \`/setup\` \\- Configure portal \\(admins only\\)
+• \`/link \\[nonce\\]\` \\- Link portal to channel \\(admins only\\)
+
+*For Admins \\- Setting Up:*
+1️⃣ Add bot to your group as admin
+2️⃣ Run \`/setup\` in the group
+3️⃣ Click "Set Mint Address" and paste token address
+4️⃣ Click "Set Tokens Amount" and enter minimum amount
+5️⃣ Copy the nonce from setup message
+6️⃣ Run \`/link \\[nonce\\]\` in your target channel
+7️⃣ Done\\! Share the join button
+
+*For Users \\- Joining:*
+1️⃣ Click the join button in a token\\-gated channel
+2️⃣ Connect your Solana wallet \\(Phantom/Backpack/Solflare\\)
+3️⃣ Sign the verification message
+4️⃣ If you have required tokens, you'll be approved\\!
+
+*How Verification Works:*
+• Bot checks your token balance when you join
+• Bot re\\-checks every 15 minutes automatically
+• If you sell tokens, you'll be removed
+• Always verify URL is \`openguard\\.cc\` before connecting
+
+*Need Support?*
+🌐 Website: openguard\\.cc
+💬 Developers: @glowiedev @onlyzhynx
+📖 GitHub: github\\.com/glowiedev/OpenGuard`;
+
+  await ctx.reply(helpMessage, {
+    parse_mode: "MarkdownV2",
+  });
+});
+
 bot.command("setup", async (ctx) => {
   if (ctx.chat.type === "private") {
     return ctx.reply("❌ This command must be run in a group\\.");
