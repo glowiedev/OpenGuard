@@ -4,7 +4,13 @@ export const fetchCache = "force-no-store";
 import { generateNonce, isValidTokenMint } from "@/lib/crypto";
 import { KVConfig } from "@/lib/types";
 import { Redis } from "@upstash/redis";
-import { Bot, InlineKeyboard, webhookCallback } from "grammy";
+import {
+  Bot,
+  CommandContext,
+  Context,
+  InlineKeyboard,
+  webhookCallback,
+} from "grammy";
 import { NextRequest, NextResponse } from "next/server";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -73,7 +79,34 @@ bot.on("chat_join_request", async (ctx) => {
   }
 });
 
+async function ensureAdmins(ctx: CommandContext<Context>) {
+  const chatId = ctx.chat.id;
+  const userId = ctx.from!.id;
+  const botId = (await ctx.api.getMe()).id;
+  const userMember = await ctx.api.getChatMember(chatId, userId);
+  const botMember = await ctx.api.getChatMember(chatId, botId);
+  const isUserAdmin =
+    userMember.status === "administrator" || userMember.status === "creator";
+  const isBotAdmin =
+    botMember.status === "administrator" || botMember.status === "creator";
+  if (!isUserAdmin) {
+    throw new Error("❌ You must be an administrator to run this command.");
+  }
+  if (!isBotAdmin) {
+    throw new Error("❌ The bot must be an administrator to run this command.");
+  }
+}
+
 bot.command("setup", async (ctx) => {
+  if (ctx.chat.type === "private") {
+    return ctx.reply("❌ This command must be run in a group\\.");
+  }
+  try {
+    await ensureAdmins(ctx);
+  } catch (err) {
+    return ctx.reply((err as { message: string }).message);
+  }
+
   const configKey = `config:${ctx.chat?.id}`;
   let config = await redis.get<{
     nonce: string;
@@ -101,6 +134,11 @@ bot.command("link", async (ctx) => {
     return ctx.reply(
       "❌ This command must be run in the channel or group you intend to use as the token-gated portal\\.",
     );
+  }
+  try {
+    await ensureAdmins(ctx);
+  } catch (err) {
+    return ctx.reply((err as { message: string }).message);
   }
 
   const currentChatId = ctx.chat.id;
