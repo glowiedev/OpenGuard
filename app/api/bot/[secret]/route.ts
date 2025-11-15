@@ -4,8 +4,10 @@ export const fetchCache = "force-no-store";
 import { generateNonce, isValidTokenMint } from "@/lib/crypto";
 import { KVConfig } from "@/lib/types";
 import { Redis } from "@upstash/redis";
-import { Bot, CommandContext, InlineKeyboard, webhookCallback } from "grammy";
+import { Bot, CommandContext, InlineKeyboard, InputFile, webhookCallback } from "grammy";
 import { NextRequest, NextResponse } from "next/server";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const secret_env = process.env.TELEGRAM_SECRET;
@@ -199,14 +201,26 @@ bot.command("link", async (ctx) => {
   }
   config.portalChatId = currentChatId;
   await redis.set(foundConfigKey, config);
-  const embedText = `✅ **Portal Linked Successfully**
-`;
+  const embedText = `✅ *Portal Linked Successfully*\n\nClick below to verify your wallet\\.`;
   const portalUrl = process.env.NEXT_PUBLIC_DOMAIN! + "/join/" + nonce;
-  const joinKeyboard = new InlineKeyboard().url("🚀 Join", portalUrl);
-  await ctx.reply(embedText, {
-    parse_mode: "MarkdownV2",
-    reply_markup: joinKeyboard,
-  });
+  const joinKeyboard = new InlineKeyboard().url("🚀 Join Portal", portalUrl);
+  
+  try {
+    // Try to send the banner image
+    const bannerPath = join(process.cwd(), "public", "banner-channel.png");
+    const bannerBuffer = readFileSync(bannerPath);
+    await ctx.replyWithPhoto(new InputFile(bannerBuffer), {
+      caption: embedText,
+      parse_mode: "MarkdownV2",
+      reply_markup: joinKeyboard,
+    });
+  } catch (err) {
+    // Fallback to text message if image fails
+    await ctx.reply(embedText, {
+      parse_mode: "MarkdownV2",
+      reply_markup: joinKeyboard,
+    });
+  }
 });
 
 const userState = new Map<number, "mint" | "amount" | null>();
