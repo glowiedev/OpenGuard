@@ -4,13 +4,7 @@ export const fetchCache = "force-no-store";
 import { generateNonce, isValidTokenMint } from "@/lib/crypto";
 import { KVConfig } from "@/lib/types";
 import { Redis } from "@upstash/redis";
-import {
-  Bot,
-  CommandContext,
-  Context,
-  InlineKeyboard,
-  webhookCallback,
-} from "grammy";
+import { Bot, CommandContext, InlineKeyboard, webhookCallback } from "grammy";
 import { NextRequest, NextResponse } from "next/server";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -79,7 +73,7 @@ bot.on("chat_join_request", async (ctx) => {
   }
 });
 
-async function ensureAdmins(ctx: CommandContext<Context>) {
+async function ensureAdmins(ctx: CommandContext<any>) {
   const chatId = ctx.chat.id;
   const userId = ctx.from!.id;
   const botId = (await ctx.api.getMe()).id;
@@ -96,6 +90,20 @@ async function ensureAdmins(ctx: CommandContext<Context>) {
     throw new Error("❌ The bot must be an administrator to run this command.");
   }
 }
+
+bot.use(async (ctx, next) => {
+  if (ctx.callbackQuery) {
+    try {
+      await ensureAdmins(ctx as any);
+    } catch (err) {
+      return ctx.answerCallbackQuery({
+        text: (err as { message: string }).message,
+        show_alert: true,
+      });
+    }
+  }
+  return next();
+});
 
 bot.command("setup", async (ctx) => {
   if (ctx.chat.type === "private") {
