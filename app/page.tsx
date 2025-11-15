@@ -17,7 +17,7 @@ export default function Home() {
               className="w-30 h-auto"
             />
             <div>
-              <h1 className="text-6xl md:text-7xl font-bold tracking-tighter mb-2 text-white">
+              <h1 className="text-4xl md:text-7xl font-bold tracking-tighter mb-2 text-white">
                 OpenGuard
               </h1>
               <div className="flex items-center gap-2">
