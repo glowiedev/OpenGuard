@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OpenGuard - Token-Gated Telegram Communities",
-  description: "Automatically verify token holdings for Telegram group access. Powered by Solana blockchain.",
+  description: "Automatically verify token holdings for Telegram group access. Powered by x403 Protocol and Solana.",
 };
 
 export default function RootLayout({
