@@ -170,6 +170,14 @@ bot.command("link", async (ctx) => {
       `❌ Link failed: This setup is already linked to chat ID \`${config.portalChatId}\`\.`,
     );
   }
+  const originalAdmins = await bot.api.getChatAdministrators(
+    foundConfigKey.substring(7),
+  );
+  if (!!!originalAdmins.find((admin) => admin.user.id === ctx.from!.id)) {
+    return ctx.reply(
+      "❌ Link failed: You must be an admin of the group to link the portal\.",
+    );
+  }
   config.portalChatId = currentChatId;
   await redis.set(foundConfigKey, config);
   const embedText = `✅ **Portal Linked Successfully**
