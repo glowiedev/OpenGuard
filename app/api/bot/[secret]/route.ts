@@ -280,10 +280,11 @@ bot.command("link", async (ctx) => {
     if (!ctx.from) {
       return ctx.reply("❌ Link failed: Could not identify user\\.");
     }
+    const userId = ctx.from.id;
     const originalAdmins = await bot.api.getChatAdministrators(
       foundConfigKey.substring(7),
     );
-    if (!!!originalAdmins.find((admin) => admin.user.id === ctx.from.id)) {
+    if (!!!originalAdmins.find((admin) => admin.user.id === userId)) {
       return ctx.reply(
         "❌ Link failed: You must be an admin of the group to link the portal\.",
       );
