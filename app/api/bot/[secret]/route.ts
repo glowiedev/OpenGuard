@@ -143,10 +143,29 @@ bot.command("link", async (ctx) => {
       "❌ This command must be run in the channel or group you intend to use as the token-gated portal\\.",
     );
   }
-  try {
-    await ensureAdmins(ctx);
-  } catch (err) {
-    return ctx.reply((err as { message: string }).message);
+  
+  // For channels, only check if bot is admin (user check not needed as channel admins can post as channel)
+  const chatId = ctx.chat.id;
+  const botId = (await ctx.api.getMe()).id;
+  const botMember = await ctx.api.getChatMember(chatId, botId);
+  const isBotAdmin = botMember.status === "administrator" || botMember.status === "creator";
+  
+  if (!isBotAdmin) {
+    return ctx.reply("❌ The bot must be an administrator to run this command\\.");
+  }
+  
+  // For groups (not channels), also verify user is admin
+  if (ctx.chat.type === "group" || ctx.chat.type === "supergroup") {
+    try {
+      const userId = ctx.from!.id;
+      const userMember = await ctx.api.getChatMember(chatId, userId);
+      const isUserAdmin = userMember.status === "administrator" || userMember.status === "creator";
+      if (!isUserAdmin) {
+        return ctx.reply("❌ You must be an administrator to run this command\\.");
+      }
+    } catch (err) {
+      return ctx.reply("❌ Could not verify your admin status\\.");
+    }
   }
 
   const currentChatId = ctx.chat.id;
