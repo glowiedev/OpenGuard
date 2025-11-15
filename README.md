@@ -197,19 +197,3 @@ This project is fully open source under the MIT license. You can:
 
 **Powered by:**
 - [OpenKitx403](https://www.openkitx403.dev/) - HTTP-native wallet authentication protocol
-
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details
-
----
-
-<div align="center">
-
-**[Get Started](https://t.me/OpenGuardBot)** • **[Documentation](https://github.com/glowiedev/OpenGuard)** • **[Report Bug](https://github.com/glowiedev/OpenGuard/issues)**
-
-Made with 💜 by the Solana community
-
-</div>
