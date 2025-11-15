@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OpenGuard - Token-Gated Telegram Communities",
-  description: "Automatically verify token holdings for Telegram group access. Powered by x403 Protocol and Solana.",
+  description: "Automatically verify token holdings for Telegram group access. Powered by x403 Protocol.",
+  icons: {
+    icon: '/logo-transparent.png',
+  },
 };
 
 export default function RootLayout({

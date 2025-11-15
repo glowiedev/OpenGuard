@@ -3,6 +3,7 @@
 import { OpenKit403Client } from "@openkitx403/client";
 import { useEffect, useState } from "react";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 type JoinState = 
   | { status: "idle" }
@@ -20,7 +21,6 @@ export default function Join(props: PageProps<"/join/[id]">) {
     async function invoke() {
       const { id } = await props.params;
       
-      // Try wallet connections
       if (!client["walletInstance"]) {
         try {
           setState({ status: "connecting", wallet: "Phantom" });
@@ -36,8 +36,8 @@ export default function Join(props: PageProps<"/join/[id]">) {
             } catch (e) {
               setState({ 
                 status: "error", 
-                error: "No wallet found",
-                details: "Please install Phantom, Backpack, or Solflare wallet"
+                error: "NO_WALLET_FOUND",
+                details: "Install Phantom, Backpack, or Solflare"
               });
               return;
             }
@@ -59,7 +59,7 @@ export default function Join(props: PageProps<"/join/[id]">) {
           if (data.error) {
             setState({ 
               status: "error", 
-              error: data.error,
+              error: data.error.toUpperCase().replace(/_/g, " "),
               details: data.message 
             });
             return;
@@ -67,7 +67,6 @@ export default function Join(props: PageProps<"/join/[id]">) {
 
           if (data.link) {
             setState({ status: "success", link: data.link });
-            // Small delay to show success state
             setTimeout(() => {
               window.location.href = data.link;
             }, 1500);
@@ -76,7 +75,7 @@ export default function Join(props: PageProps<"/join/[id]">) {
       } catch (e: any) {
         setState({ 
           status: "error", 
-          error: "Authentication failed",
+          error: "AUTHENTICATION_FAILED",
           details: e.message || "Please try again"
         });
       }
@@ -85,155 +84,152 @@ export default function Join(props: PageProps<"/join/[id]">) {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-6 py-12 relative">
+      <div className="w-full max-w-2xl relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#9042f8] to-[#14F195] bg-clip-text text-transparent mb-2">
-            OpenGuard
-          </h1>
-          <p className="text-gray-400 text-sm">Token-gated access</p>
+        <div className="flex items-center gap-4 mb-8 border-b-2 border-[#9042f8] pb-6">
+          <Image 
+            src="/logo-transparent.png" 
+            alt="OpenGuard" 
+            width={80} 
+            height={80}
+            className="w-20 h-auto"
+          />
+          <div>
+            <h1 className="text-4xl font-bold tracking-tighter">OpenGuard</h1>
+            <p className="text-gray-400 font-mono text-xs">VERIFICATION_PORTAL</p>
+          </div>
         </div>
 
-        {/* Main Card */}
-        <div className="bg-[#3e1a6e]/30 backdrop-blur-sm rounded-2xl border border-[#9042f8]/20 p-8">
-          {/* Progress Steps */}
-          <div className="flex justify-between mb-8">
-            <StepIndicator 
-              step={1} 
-              label="Connect" 
-              active={state.status === "idle" || state.status === "connecting"}
-              completed={state.status !== "idle" && state.status !== "connecting" && state.status !== "error"}
-            />
-            <div className="flex-1 h-0.5 bg-[#3e1a6e] self-center mx-2 mt-3">
-              <div 
-                className="h-full bg-[#9042f8] transition-all duration-500"
-                style={{ 
-                  width: state.status === "idle" || state.status === "connecting" ? "0%" : "100%"
-                }}
-              />
+        {/* Security Warning */}
+        <div className="mb-8 border-2 border-[#14F195] bg-[#14F195]/5 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-[#14F195] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <div>
+              <p className="text-[#14F195] font-bold text-sm mb-1 font-mono">VERIFY URL</p>
+              <p className="text-gray-300 text-xs">
+                Always check you&apos;re on <span className="font-mono font-bold text-white">openguard.cc</span> before connecting your wallet
+              </p>
             </div>
-            <StepIndicator 
-              step={2} 
-              label="Verify" 
-              active={state.status === "signing" || state.status === "verifying"}
-              completed={state.status === "success"}
-            />
-            <div className="flex-1 h-0.5 bg-[#3e1a6e] self-center mx-2 mt-3">
-              <div 
-                className="h-full bg-[#9042f8] transition-all duration-500"
-                style={{ 
-                  width: state.status === "success" ? "100%" : "0%"
-                }}
-              />
-            </div>
-            <StepIndicator 
-              step={3} 
-              label="Join" 
-              active={state.status === "success"}
-              completed={false}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8 space-y-2">
+          <div className="flex gap-4 font-mono text-xs">
+            <span className={state.status === "idle" || state.status === "connecting" ? "text-[#9042f8]" : "text-gray-600"}>[CONNECT]</span>
+            <span className={state.status === "signing" || state.status === "verifying" ? "text-[#9042f8]" : "text-gray-600"}>[VERIFY]</span>
+            <span className={state.status === "success" ? "text-[#14F195]" : "text-gray-600"}>[ACCESS]</span>
+          </div>
+          <div className="h-1 bg-gray-800 relative overflow-hidden">
+            <div 
+              className="absolute h-full bg-[#9042f8] transition-all duration-500"
+              style={{ 
+                width: state.status === "idle" || state.status === "connecting" ? "33%" : 
+                       state.status === "signing" || state.status === "verifying" ? "66%" :
+                       state.status === "success" ? "100%" : "0%"
+              }}
             />
           </div>
+        </div>
 
-          {/* Content based on state */}
-          <div className="min-h-[200px] flex items-center justify-center">
+        {/* Main Content */}
+        <div className="border-2 border-[#9042f8] bg-black/40 p-12">
+          <div className="min-h-[300px] flex items-center justify-center">
             {state.status === "idle" && (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-[#9042f8]/20 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[#9042f8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#9042f8]">
+                  <svg className="w-12 h-12 text-[#9042f8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Initializing...</h3>
-                  <p className="text-gray-400 text-sm">Preparing wallet connection</p>
+                  <h3 className="text-2xl font-bold mb-2">INITIALIZING</h3>
+                  <p className="text-gray-400 font-mono text-sm">Preparing connection...</p>
                 </div>
               </div>
             )}
 
             {state.status === "connecting" && (
-              <div className="text-center space-y-4">
-                <div className="relative">
-                  <div className="w-16 h-16 mx-auto">
-                    <svg className="animate-spin text-[#9042f8]" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  </div>
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#9042f8] relative">
+                  <svg className="animate-spin w-12 h-12 text-[#9042f8]" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Connecting to {state.wallet}</h3>
-                  <p className="text-gray-400 text-sm">Please approve the connection in your wallet</p>
+                  <h3 className="text-2xl font-bold mb-2">CONNECTING</h3>
+                  <p className="text-gray-400 font-mono text-sm">{state.wallet} wallet detected</p>
+                  <p className="text-gray-600 font-mono text-xs mt-2">Approve connection in wallet...</p>
                 </div>
               </div>
             )}
 
             {state.status === "signing" && (
-              <div className="text-center space-y-4">
-                <div className="relative">
-                  <div className="w-16 h-16 mx-auto">
-                    <svg className="animate-spin text-[#9042f8]" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  </div>
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#9042f8]">
+                  <svg className="animate-spin w-12 h-12 text-[#9042f8]" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Signing message</h3>
-                  <p className="text-gray-400 text-sm">Please sign the message in your wallet</p>
+                  <h3 className="text-2xl font-bold mb-2">SIGN MESSAGE</h3>
+                  <p className="text-gray-400 font-mono text-sm">Approve in wallet to continue</p>
                 </div>
               </div>
             )}
 
             {state.status === "verifying" && (
-              <div className="text-center space-y-4">
-                <div className="relative">
-                  <div className="w-16 h-16 mx-auto">
-                    <svg className="animate-spin text-[#9042f8]" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  </div>
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#9042f8]">
+                  <svg className="animate-spin w-12 h-12 text-[#9042f8]" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Verifying token balance</h3>
-                  <p className="text-gray-400 text-sm">Checking your tokens on Solana...</p>
+                  <h3 className="text-2xl font-bold mb-2">VERIFYING</h3>
+                  <p className="text-gray-400 font-mono text-sm">Checking token balance on-chain...</p>
                 </div>
               </div>
             )}
 
             {state.status === "success" && (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-[#14F195]/20 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[#14F195]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#14F195]">
+                  <svg className="w-12 h-12 text-[#14F195]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 text-[#14F195]">Verified! ✓</h3>
-                  <p className="text-gray-400 text-sm">Redirecting to Telegram...</p>
+                  <h3 className="text-2xl font-bold mb-2 text-[#14F195]">ACCESS GRANTED</h3>
+                  <p className="text-gray-400 font-mono text-sm">Redirecting to Telegram...</p>
                 </div>
               </div>
             )}
 
             {state.status === "error" && (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-[#FF4444]/20 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[#FF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-block p-4 border-2 border-[#FF4444]">
+                  <svg className="w-12 h-12 text-[#FF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 text-[#FF4444]">{state.error}</h3>
+                  <h3 className="text-2xl font-bold mb-2 text-[#FF4444]">{state.error}</h3>
                   {state.details && (
-                    <p className="text-gray-400 text-sm">{state.details}</p>
+                    <p className="text-gray-400 font-mono text-sm">{state.details}</p>
                   )}
                 </div>
                 <button 
                   onClick={() => window.location.reload()}
-                  className="mt-4 px-6 py-2 bg-[#9042f8] hover:bg-[#9042f8]/80 rounded-lg font-semibold transition-colors"
+                  className="mt-6 px-8 py-3 border-2 border-[#9042f8] hover:bg-[#9042f8] font-bold transition-colors"
                 >
-                  Try Again
+                  TRY AGAIN
                 </button>
               </div>
             )}
@@ -241,35 +237,12 @@ export default function Join(props: PageProps<"/join/[id]">) {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-xs text-gray-500">
-            Secured by OpenKit • Verified on Solana
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-600 font-mono">
+            <a href="https://www.openkitx403.dev/" target="_blank" rel="noopener noreferrer" className="hover:text-[#9042f8]">openkitx403</a> • http 403 wallet authentication
           </p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function StepIndicator({ step, label, active, completed }: { 
-  step: number; 
-  label: string; 
-  active: boolean; 
-  completed: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center">
-      <div 
-        className={`
-          w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all
-          ${completed ? "bg-[#14F195] text-black" : active ? "bg-[#9042f8] text-white" : "bg-[#3e1a6e] text-gray-400"}
-        `}
-      >
-        {completed ? "✓" : step}
-      </div>
-      <span className={`text-xs mt-2 ${active || completed ? "text-white" : "text-gray-500"}`}>
-        {label}
-      </span>
     </div>
   );
 }

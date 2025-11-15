@@ -28,7 +28,7 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
-/* Smooth gradient background */
+/* Grid pattern background */
 body::before {
   content: "";
   position: fixed;
@@ -36,8 +36,23 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(ellipse at top, rgba(144, 66, 248, 0.15) 0%, transparent 60%),
-              radial-gradient(ellipse at bottom right, rgba(62, 26, 110, 0.2) 0%, transparent 50%);
+  background-image: 
+    linear-gradient(rgba(144, 66, 248, 0.05) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(144, 66, 248, 0.05) 2px, transparent 2px);
+  background-size: 60px 60px;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
+}
+
+/* Accent line */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #9042f8 0%, #14F195 100%);
+  pointer-events: none;
+  z-index: 50;
 }
