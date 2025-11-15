@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { generateNonce, getAccount, getMint } from "@/lib/crypto";
+import { RedisReplayStore } from "@/lib/store";
 import { KVConfig } from "@/lib/types";
 import { handleOpenKitAuth } from "@/lib/withOpenKitAuth";
 import { inMemoryLRU, OpenKit403Config } from "@openkitx403/server";
@@ -16,7 +17,7 @@ const myOpenKitConfig: OpenKit403Config = {
   audience: process.env.NEXT_PUBLIC_DOMAIN!,
   ttlSeconds: 60,
   bindMethodPath: true,
-  replayStore: inMemoryLRU(),
+  replayStore: new RedisReplayStore(),
 };
 
 const redis = Redis.fromEnv();
